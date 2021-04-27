@@ -7,6 +7,7 @@ dist_pkgdata_DATA += gldcore/converters/csv2glm.py
 dist_pkgdata_DATA += gldcore/converters/csv-ceus2glm-ceus.py
 dist_pkgdata_DATA += gldcore/converters/csv-ami2glm-rbsa.py
 dist_pkgdata_DATA += gldcore/converters/csv-ami2glm-ceus.py
+dist_pkgdata_DATA += gldcore/converters/csv-ami2glm-house.py
 dist_pkgdata_DATA += gldcore/converters/csv-scada2glm-rbsa.py
 dist_pkgdata_DATA += gldcore/converters/csv-scada2glm-ceus.py
 dist_pkgdata_DATA += gldcore/converters/csv-ica2glm-ica.py
