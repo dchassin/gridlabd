@@ -351,6 +351,9 @@ private:
 	int modify_directive(PARSER);
 	void loader_addhook(PARSERCALL call);
 	int loader_hook(PARSER);
+	int stochastic_block(PARSER);
+	int stochastic_group(PARSER,char * groupname, size_t size);
+	int stochaster_properties(PARSER,STOCHASTICGROUP *group);
 	int gridlabd_file(PARSER);
 	int replace_variables(char *to,char *from,int len,int warn);
 	int buffer_read(FILE *fp, char *buffer, char *filename, int size);

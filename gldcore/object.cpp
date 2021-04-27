@@ -611,6 +611,7 @@ OBJECT *object_create_single(CLASS *oclass) /**< the class of the object */
 	obj->rng_state = randwarn(NULL);
 	obj->heartbeat = 0;
 	obj->events = oclass->events;
+	obj->refcnt = 1;
 	random_key(obj->guid,sizeof(obj->guid)/sizeof(obj->guid[0]));
 
 	object_create_properties(obj,obj->oclass);
@@ -680,6 +681,11 @@ OBJECT *object_create_foreign(OBJECT *obj) /**< a pointer to the OBJECT data str
 	obj->out_svc = TS_NEVER;
 	obj->out_svc_micro = 0;
 	obj->out_svc_double = (double)obj->out_svc;
+	obj->refcnt = 1;
+	obj->rng_state = randwarn(NULL);
+	obj->heartbeat = 0;
+	obj->events = oclass->events;
+	obj->refcnt = 1;
 	obj->flags = OF_FOREIGN;
 	
 	if(first_object == NULL){
@@ -3544,6 +3550,11 @@ PROPERTY *object_get_property_by_addr(OBJECT *obj, void *addr, bool full)
 	return NULL;
 }
 
+void *object_property_getaddr(OBJECT *obj, PROPERTY *prop)
+{
+	return (void*)((char*)(obj+1) + prop->addr);
+}
+
 PROPERTY *object_get_first_property(OBJECT *obj, bool full)
 {
 	CLASS *oclass = obj->oclass;
@@ -3582,6 +3593,67 @@ void object_destroy_all(void)
 	{
 		object_destroy(obj);
 	}
+}
+
+DEPRECATED bool object_property_set_string(OBJECT *obj, PROPERTY *prop, const char *str, bool nothrow)
+{
+	if ( ! property_is_underlying_string(prop) )
+	{
+		if ( nothrow ) return false;
+		throw_exception("object_property_set_string(obj=<OBJECT:name='%s'>, prop=<PROPERTY:name='%s'>, str='%.32s%s'): property is not an underlying string"
+			object_name(obj), prop->name, str, strlen(str)>31?"...":"");
+	}
+	if ( property_size(prop) < strlen(str)+1 )
+	{
+		if ( nothrow ) return false;
+		throw_exception("object_property_set_string(obj=<OBJECT:name='%s'>, prop=<PROPERTY:name='%s'>, str='%.32s%s'): value is too larger for underlying string"
+			object_name(obj), prop->name, str, strlen(str)>31?"...":"");
+	}
+	void *addr = object_property_getaddr(obj,prop);
+	strcpy(addr,str);
+	return true;
+}
+
+DEPRECATED bool object_property_set_complex(OBJECT *obj, PROPERTY *prop, complex &z, bool nothrow)
+{
+	if ( ! property_is_underlying_complex(prop) )
+	{
+		if ( nothrow ) return false;
+		throw_exception("object_property_set_complex(obj=<OBJECT:name='%s'>, prop=<PROPERTY:name='%s'>, z=%g%+gj): property is not an underlying complex"
+			object_name(obj), prop->name, str, z.Re(), z.Im());
+	}
+	*(complex*)object_property_getaddr(obj,prop) = z;
+	return true;
+}
+
+DEPRECATED bool object_property_set_double(OBJECT *obj, PROPERTY *prop, double x, bool nothrow)
+{
+	if ( ! property_is_underlying_double(prop) )
+	{
+		if ( nothrow ) return false;
+		throw_exception("object_property_set_double(obj=<OBJECT:name='%s'>, prop=<PROPERTY:name='%s'>, x=%g): property is not an underlying double"
+			object_name(obj), prop->name, str, x);
+	}
+	*(double*)object_property_getaddr(obj,prop) = z;
+	return true;
+}
+
+DEPRECATED bool object_property_set_integer(OBJECT *obj, PROPERTY *prop, long long i, bool nothrow)
+{
+	if ( ! property_is_underlying_double(prop) )
+	{
+		if ( nothrow ) return false;
+		throw_exception("object_property_set_integer(obj=<OBJECT:name='%s'>, prop=<PROPERTY:name='%s'>, i=%lld): property is not an underlying double"
+			object_name(obj), prop->name, str, i);
+	}
+	switch ( prop->ptype )
+	{
+	case PT_int16:
+		
+		*(int16*)object_property_getaddr(obj,prop) = (int16)i;
+		break;
+	}
+	return true;
 }
 
 /** @} **/

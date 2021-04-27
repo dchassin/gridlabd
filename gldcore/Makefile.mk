@@ -58,6 +58,7 @@ GLD_SOURCES_PLACE_HOLDER += gldcore/save.cpp gldcore/save.h
 GLD_SOURCES_PLACE_HOLDER += gldcore/schedule.cpp gldcore/schedule.h
 GLD_SOURCES_PLACE_HOLDER += gldcore/server.cpp gldcore/server.h
 GLD_SOURCES_PLACE_HOLDER += gldcore/setup.cpp gldcore/setup.h
+GLD_SOURCES_PLACE_HOLDER += gldcore/stochastic.cpp gldcore/stochastic.h
 GLD_SOURCES_PLACE_HOLDER += gldcore/stream.cpp gldcore/stream.h
 GLD_SOURCES_PLACE_HOLDER += gldcore/stream_type.h
 GLD_SOURCES_PLACE_HOLDER += gldcore/test.cpp gldcore/test.h

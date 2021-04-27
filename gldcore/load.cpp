@@ -6314,6 +6314,50 @@ int GldLoader::loader_hook(PARSER)
 	}
 }
 
+int GldLoader::stochastic_group(PARSER,char * groupname, size_t size)
+{
+	// TODO
+	return 0;
+}
+
+int GldLoader::stochaster_properties(PARSER,STOCHASTICGROUP *group)
+{
+	// TODO
+	return 0;	
+}
+
+int GldLoader::stochastic_block(PARSER)
+{
+	char groupname[64];
+	START;
+	if WHITE ACCEPT;
+	if LITERAL("stochastic") ACCEPT else REJECT;
+	if WHITE ACCEPT;
+	if TERM(stochastic_group,groupname,sizeof(groupname)) ACCEPT else REJECT;
+	if WHITE ACCEPT;
+	if LITERAL("{") ACCEPT
+	else
+	{
+		syntax_error(filename,linenum,"expected stochastic block opening {");
+		REJECT;
+	}
+	if WHITE ACCEPT;
+	STOCHASTICGROUP group;
+	if TERM(stochastic_properties(HERE,STOCHASTICGROUP &group)) ACCEPT;
+	if WHITE ACCEPT;
+	if LITERAL("}") ACCEPT else
+	{
+		syntax_error(filename,linenum,"expected stochastic block closing }");
+		REJECT;
+	}
+	if ( stochastic_new(&group) == NULL )
+	{
+		syntax_error(filename,linenum,"unable to create new stochastic group");
+		REJECT;
+	}
+	DONE;
+}
+
 int GldLoader::gridlabd_file(PARSER)
 {
 	START;
@@ -6338,6 +6382,7 @@ int GldLoader::gridlabd_file(PARSER)
 	OR if TERM(dump_directive(HERE)) { ACCEPT; DONE; }
 	OR if TERM(modify_directive(HERE)) { ACCEPT; DONE; }
 	OR if TERM(loader_hook(HERE)) { ACCEPT; DONE; }
+	OR if TERM(stochastic_block(HERE)) { ACCEPT; DONE; }
 	OR if (*(HERE)=='\0') {ACCEPT; DONE;}
 	else
 	{

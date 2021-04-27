@@ -130,6 +130,7 @@ typedef enum e_status {FAILED=FALSE, SUCCESS=TRUE} STATUS;
 #include "schedule.h"
 #include "server.h"
 #include "setup.h"
+#include "stochastic.h"
 #include "stream.h"
 #include "test.h"
 #include "threadpool.h"

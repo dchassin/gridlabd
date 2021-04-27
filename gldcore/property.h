@@ -1666,7 +1666,7 @@ DEPRECATED int property_write(PROPERTY *prop, void *addr, char *string, size_t s
 	string* - success
 	NULL - failure
  */
-int string_create(void *ptr);
+DEPRECATED int string_create(void *ptr);
 
 /*	Function: convert_to_string
 
@@ -1675,7 +1675,7 @@ int string_create(void *ptr);
 	=0 - no data
 	<0 - failure
  */
-int convert_to_string(const char *s, void *data, PROPERTY *p);
+DEPRECATED int convert_to_string(const char *s, void *data, PROPERTY *p);
 
 /*	Function: convert_from_string
 
@@ -1684,12 +1684,56 @@ int convert_to_string(const char *s, void *data, PROPERTY *p);
 	=0 - no data
 	<0 - failure
  */
-int convert_from_string(char *buffer, int len, void *data, PROPERTY *p);
+DEPRECATED int convert_from_string(char *buffer, int len, void *data, PROPERTY *p);
 
-// EOF
+DEPRECATED bool property_has_tostring(PROPERTY *prop, bool nothrow = true);
+DEPRECATED bool property_is_underlying_integer(PROPERTY *prop, bool nothrow = true);
+DEPRECATED bool property_is_underlying_double(PROPERTY *prop, bool nothrow = true);
+DEPRECATED bool property_is_underlying_complex(PROPERTY *prop, bool nothrow = true);
+DEPRECATED bool property_is_underlying_string(PROPERTY *prop, bool nothrow = true);
 
 #ifdef __cplusplus
 }
 #endif
 
+class s_objprop
+{
+private:
+	OBJECT *obj;
+	PROPERTY *prop;
+public:
+	objprop(const char *name);
+	objprop(int id, const char *pname, bool nothrow = true);
+	objprop(int id, PROPERTY *p, bool nothrow = true);
+	objprop(const char *oname, const char *pname, bool nothrow = true);
+	objprop(const char *oname, PROPERTY *p, bool nothrow = true);
+	objprop(OBJECT *o, const char *pname, bool nothrow = true);
+	objprop(OBJECT *o, PROPERTY *p, bool nothrow = true);
+	~objprop(void);
+public:
+	bool is_valid(bool nothrow = true);
+	bool is_double(bool nothrow = true);
+	bool is_complex(bool nothrow = true);
+	bool is_longlong(bool nothrow = true);
+	bool is_string(bool nothrow = true);
+	bool has_unit(bool nothrow = true);
+	long long as_longlong();
+	double as_double(UNIT *u = NULL);
+	complex as_complex(UNIT *u = NULL);
+	std::string as_string(UNIT *u = NULL);
+	bool get(UNIT **p, bool nothrow = true);
+	bool get(int16 **p, bool nothrow = true);
+	bool get(int32 **p, bool nothrow = true);
+	bool get(int64 **p, bool nothrow = true);
+	bool get(double **p, bool nothrow = true);
+	bool get(complex **p, bool nothrow = true);
+	bool get(const char **p, bool nothrow = true);
+	bool set(long long n, nothrow = true);
+	bool set(double x, UNIT *u, nothrow = true);
+	bool set(complex &z, UNIT *u, nothrow = true);
+	bool set(const char *s, nothrow = true);
+};
+
 #endif //_PROPERTY_H
+
+// EOF

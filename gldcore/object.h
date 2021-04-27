@@ -125,6 +125,7 @@ typedef struct s_object_list {
 	TIMESTAMP heartbeat; /**< heartbeat call interval (in sim-seconds) */
 	unsigned long long guid[2]; /**< globally unique identifier */
 	EVENTHANDLERS events;
+	int refcnt;
 	/* IMPORTANT: flags must be last */
 	unsigned long long flags; /**< object flags */
 } OBJECT; /**< Object header structure */
@@ -409,6 +410,7 @@ OBJECT *object_find_name(OBJECTNAME name);
 int object_build_name(OBJECT *obj, char *buffer, int len);
 int object_locate_property(void *addr, OBJECT **pObj, PROPERTY **pProp);
 int object_property_getsize(OBJECT *obj, PROPERTY *prop);
+void *object_property_getaddr(OBJECT *obj, PROPERTY *prop);
 
 int object_get_oflags(KEYWORD **extflags);
 
@@ -522,6 +524,14 @@ const char* object_get_header_string(OBJECT *obj, const char *item, char *buffer
 #define MYPARENT (MY->parent) /**< get the parent from the object's data structure */
 #define MYCLOCK (MY->clock) /**< get an object's own clock */
 #define MYRANK (MY->rank) /**< get an object's own rank */
+
+DEPRECATED bool object_property_set_string(OBJECT *obj, PROPERTY *prop, const char *str, bool nothrow = true);
+DEPRECATED bool object_property_set_complex(OBJECT *obj, PROPERTY *prop, complex &z, bool nothrow = true);
+DEPRECATED bool object_property_set_double(OBJECT *obj, PROPERTY *prop, double x, bool nothrow = true);
+DEPRECATED bool object_property_set_integer(OBJECT *obj, PROPERTY *prop, long long i, bool nothrow = true);
+
+DEPRECRATED inline int object_incref(OBJECT *obj) { return obj->refcnt++; };
+DEPCRECATED inline int object_decref(OBJECT *obj) { return --obj->refcnt; };
 
 // Class: GldObject
 // Object implementation

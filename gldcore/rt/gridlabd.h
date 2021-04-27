@@ -781,6 +781,7 @@ struct s_object_list {
 	TIMESTAMP heartbeat; /**< heartbeat call interval (in sim-seconds) */
 	unsigned long long guid[2]; /**< globally unique identifier */
 	EVENTHANDLERS events;
+	int refcnt;
 	/* IMPORTANT: flags must be last */
 	unsigned long long flags; /**< object flags */
 }; /**< Object header structure */

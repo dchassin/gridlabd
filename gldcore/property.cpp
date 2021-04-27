@@ -666,4 +666,504 @@ int convert_from_string(char *buffer, int len, void *data, PROPERTY *p)
 	int n = snprintf(buffer,(size_t)len,"%s",(*str)->c_str());
 	return n;
 }
+
+DEPRECATED bool property_has_tostring(PROPERTY *prop, bool nothrow)
+{
+	return prop->tostring != NULL;
+}
+
+DEPRECATED bool property_is_underlying_integer(PROPERTY *prop, bool nothrow)
+{
+	switch ( prop->ptype )
+	{
+	case PT_bool:
+	case PT_set:
+	case PT_enumeration:
+	case PT_int16:
+	case PT_int32:
+	case PT_int64:
+	case PT_timestamp:
+		return true;
+	default:
+		return false;
+	}
+}
+
+DEPRECATED bool property_is_underlying_double(PROPERTY *prop, bool nothrow)
+{
+	switch ( prop->ptype )
+	{
+	case PT_double:
+	case PT_loadshape:
+	case PT_enduse:
+	case PT_random:
+		return true;
+	default:
+		return false;
+	}
+}
+
+DEPRECATED bool property_is_underlying_complex(PROPERTY *prop, bool nothrow)
+{
+	return prop->ptype == PT_complex:
+}
+
+DEPRECATED bool property_is_underlying_string(PROPERTY *prop, bool nothrow)
+{
+	switch ( prop->ptype )
+	{
+	case PT_char8:
+	case PT_char32:
+	case PT_char256:
+	case PT_char1024:
+	case PT_string:
+		return true;
+	default:
+		return false;
+	}
+}
+
+objprop::objprop(const char *name, bool nothrow)
+{
+	char oname[64];
+	char cname[64];
+	char pname[64];
+	int id;
+	if ( sscanf("%63[^:]:%d.%63[ \t\n]",cname,&id,pname) == 3 )
+	{
+		obj = object_find_by_id(id);
+		prop = obj ? property_find_by_name(obj,pname) : NULL;
+		const char *errmsg = NULL;
+		try
+		{
+			is_valid(no_throw);
+		}
+		catch (const char *msg)
+		{
+			errmsg = msg;
+		}
+		if ( ! nothrow && errmsg )
+		{
+			throw_exception("objprop::objprop(name='%s'): %s", name, errmsg);
+		}
+		if ( ! nothrow && strcmp(obj->oclass->name,cname) != 0 )
+		{
+			throw_exception("objprop::objprop(name='%s'): object class does not match class name", name);
+		}
+	}
+	else if ( sscanf("%63[^.].%63[ \t\n]",oname,pname) == 2 )
+	{
+
+	}
+	else
+	{
+		throw_exception("objprop::objprop(name='%s'): invalid full property name", name);
+	}
+	object_incref(obj);
+}
+
+objprop::objprop(int id, const char *pname, bool nothrow)
+{
+	obj = object_find_by_id(id);
+	prop = property_find_by_name(obj,propname);
+	const char *errmsg = NULL;
+	try
+	{
+		is_valid(no_throw);
+	}
+	catch (const char *msg)
+	{
+		errmsg = msg;
+	}
+	if ( ! nothrow && errmsg )
+	{
+		throw_exception("objprop::objprop(id=%d,pname='%s'): %s", id, pname, errmsg);
+	}
+	object_incref(obj);
+}
+
+objprop::objprop(int id, PROPERTY *p, bool nothrow)
+{
+	obj = object_find_by_id(id);
+	prop = p;
+	const char *errmsg = NULL;
+	try
+	{
+		is_valid(no_throw);
+	}
+	catch (const char *msg)
+	{
+		errmsg = msg;
+	}
+	if ( ! nothrow && errmsg )
+	{
+		throw_exception("objprop::objprop(id=%d,prop=<PROPERTY:name='%s'>): %s", id, p->name, errmsg);
+	}
+	object_incref(obj);
+}
+
+objprop::objprop(const char *oname, const char *pname, bool nothrow)
+{
+	obj = object_find_name(oname);
+	prop = obj ? property_find_by_name(obj,pname);
+	const char *errmsg = NULL;
+	try
+	{
+		is_valid(no_throw);
+	}
+	catch (const char *msg)
+	{
+		errmsg = msg;
+	}
+	if ( ! nothrow && errmsg )
+	{
+		throw_exception("objprop::objprop(oname='%s',pname='%s'): %s", oname, pname, errmsg);
+	}
+	object_incref(obj);
+}
+
+objprop::objprop(const char *oname, PROPERTY *p, bool nothrow)
+{
+	obj = object_find_name(oname);
+	prop = p;
+	const char *errmsg = NULL;
+	try
+	{
+		is_valid(no_throw);
+	}
+	catch (const char *msg)
+	{
+		errmsg = msg;
+	}
+	if ( ! nothrow && errmsg )
+	{
+		throw_exception("objprop::objprop(oname='%s',prop=<PROPERTY:name='%s'>): %s", oname, p->name, errmsg);
+	}
+	object_incref(obj);
+}
+
+objprop::objprop(OBJECT *o, const char *pname, bool nothrow)
+{
+	obj = o;
+	prop = obj ? property_find_by_name(obj);
+	const char *errmsg = NULL;
+	try
+	{
+		is_valid(no_throw);
+	}
+	catch (const char *msg)
+	{
+		errmsg = msg;
+	}
+	if ( ! nothrow && errmsg )
+	{
+		throw_exception("objprop::objprop(obj=<OBJECT:name='%s'>,pname='%s'): %s", object_name(o), pname, errmsg);
+	}
+	object_incref(obj);
+}
+
+objprop::objprop(OBJECT *o, PROPERTY *p, bool nothrow)
+{
+	obj = o;
+	prop = p;
+	const char *errmsg = NULL;
+	try
+	{
+		is_valid(no_throw);
+	}
+	catch (const char *msg)
+	{
+		errmsg = msg;
+	}
+	if ( ! nothrow && errmsg )
+	{
+		throw_exception("objprop::objprop(obj=<OBJECT:name='%s'>,prop=<PROPERTY:name='%s'>): %s", object_name(o), p->name, errmsg);
+	}
+	object_incref(obj);
+}
+
+objprop::~objprop(void)
+{
+	object_decref(obj);
+}
+
+bool objprop::is_valid(bool nothrow)
+{
+	if ( ! nothrow )
+	{
+		if ( obj == NULL || prop == NULL )
+		{
+			throw_exception("objprop(<OBJECT:name='%s'>,prop=<PROPERTY:name='%s'>)::is_valid(): "
+				"object is not valid", object_name(obj), prop->name);
+		}
+		if ( obj->oclass != prop->oclass )
+		{
+			throw_exception("objprop(<OBJECT:name='%s'>,prop=<PROPERTY:name='%s'>)::is_valid(): "
+				"object class does not match property class", object_name(obj), prop->name);
+		}
+	}
+}
+
+bool objprop::is_double(bool nothrow)
+{
+	return is_valid(nothrow) && property_is_underlying_double(prop,nothrow);
+}
+
+bool objprop::is_complex(bool nothrow)
+{
+	return is_valid(nothrow) && property_is_underlying_complex(prop,nothrow);
+}
+
+bool objprop::is_longlong(bool nothrow)
+{
+	return is_valid(nothrow) && property_is_underlying_integer(prop,nothrow);
+}
+
+bool objprop::is_string(bool nothrow)
+{
+	return is_valid(nothrow) && property_has_to_string_convert(prop,nothrow);
+}
+
+bool objprop::has_unit(bool nothrow)
+{
+	if ( is_valid(nothrow) && prop->unit != NULL )
+	{
+		return true;
+	}
+	if ( nothrow )
+	{
+		return false;
+	}
+	throw_exception("objprop(<OBJECT:name='%s'>,prop=<PROPERTY:name='%s'>)::has_unit(): "
+		"property does not units", object_name(obj), prop->name);
+}
+
+long long objprop::as_longlong()
+{
+	property_is_underlying_integer(prop,false);
+	void *addr = object_property_getaddr(obj,prop);
+	return *(long long*)addr;
+}
+
+double objprop::as_double(UNIT *u)
+{
+	property_is_underlying_double(prop,false);
+	void *addr = object_property_getaddr(obj,prop);
+	double x = *(double*)addr;
+	if ( ! u )
+	{
+		return x;
+	}
+	if ( prop->unit == NULL )
+	{
+		throw_exception("objprop(<OBJECT:name='%s'>,prop=<PROPERTY:name='%s'>)::as_double(unit='%s'): "
+			"property does not have a unit to convert from", object_name(obj), prop->name, u?u->name:"(none)");
+	}
+	if ( ! unit_convert_ex(prop->unit,u,&x) )
+	{
+		throw_exception("objprop(<OBJECT:name='%s'>,prop=<PROPERTY:name='%s'>)::as_double(unit='%s'): "
+			"property cannot be converter to specified unit", object_name(obj), prop->name, u?u->name:"(none)");
+	}
+	return x;
+}
+
+complex objprop::as_complex(UNIT *u)
+{
+	property_is_underlying_complex(prop,false);
+	void *addr = object_property_getaddr(obj,prop);
+	double z = *(complex*)addr;
+	if ( ! u )
+	{
+		return z;
+	}
+	if ( prop->unit == NULL )
+	{
+		throw_exception("objprop(<OBJECT:name='%s'>,prop=<PROPERTY:name='%s'>)::as_complex(unit='%s'): "
+			"property does not have a unit to convert from", object_name(obj), prop->name, u?u->name:"(none)");
+	}
+	if ( ! unit_convert_complex(prop->unit,u,&z) )
+	{
+		throw_exception("objprop(<OBJECT:name='%s'>,prop=<PROPERTY:name='%s'>)::as_complex(unit='%s'): "
+			"property cannot be converter to specified unit", object_name(obj), prop->name, u?u->name:"(none)");
+	}
+	return z;
+}
+
+std::string objprop::as_string(UNIT *u)
+{
+	if ( ! property_has_tostring(prop) )
+	{
+		throw_exception("objprop(<OBJECT:name='%s'>,prop=<PROPERTY:name='%s'>)::as_string(unit='%s'): "
+			"property does not have a unit to convert from", object_name(obj), prop->name, u?u->name:"(none)");
+	}
+	std::string str;
+	if ( ! object_property_to_string(obj,prop,&str) )
+	{
+		throw_exception("objprop(<OBJECT:name='%s'>,prop=<PROPERTY:name='%s'>)::as_string(unit='%s'): "
+			"property cannot be converter to specified unit", object_name(obj), prop->name, u?u->name:"(none)");
+	}
+	return str;
+}
+
+bool objprop::get(UNIT **p, bool nothrow)
+{
+	if ( prop->unit == NULL )
+	{
+		if ( ! nothrow )
+		{
+			throw_exception("objprop(<OBJECT:name='%s'>,prop=<PROPERTY:name='%s'>)::get(UNIT**): "
+				"property is does not have a specified unit", object_name(obj), prop->name);
+		}
+		return false
+	}
+ 	return true;
+}
+
+bool objprop::get(int16 **p, bool nothrow)
+{
+	if ( ! prop->ptype == PT_int16 )
+	{
+		if ( ! nothrow )
+		{
+			throw_exception("objprop(<OBJECT:name='%s'>,prop=<PROPERTY:name='%s'>)::get(int16**): "
+				"property is not an int16", object_name(obj), prop->name);
+		}
+		return false
+	}
+	*p = (int16*)object_property_getaddr(obj,prop);
+ 	return true;
+}
+
+bool objprop::get(int32 **p, bool nothrow)
+{
+	if ( ! prop->ptype == PT_int32 )
+	{
+		if ( ! nothrow )
+		{
+			throw_exception("objprop(<OBJECT:name='%s'>,prop=<PROPERTY:name='%s'>)::get(int32**): "
+				"property is not an int32", object_name(obj), prop->name);
+		}
+		return false
+	}
+	*p = (int32*)object_property_getaddr(obj,prop);
+ 	return true;
+}
+
+bool objprop::get(int64 **p, bool nothrow)
+{
+	if ( ! object_property_is_underlying_int64() )
+	{
+		if ( ! nothrow )
+		{
+			throw_exception("objprop(<OBJECT:name='%s'>,prop=<PROPERTY:name='%s'>)::get(int64**): "
+				"property is not an underlying int64", object_name(obj), prop->name);
+		}
+		return false
+	}
+	*p = (int64*)object_property_getaddr(obj,prop);
+ 	return true;
+}
+
+bool objprop::get(double **p, bool nothrow)
+{
+	if ( ! object_property_is_underlying_double() )
+	{
+		if ( ! nothrow )
+		{
+			throw_exception("objprop(<OBJECT:name='%s'>,prop=<PROPERTY:name='%s'>)::get(double**): "
+				"property is not an underlying double", object_name(obj), prop->name);
+		}
+		return false
+	}
+	*p = (double*)object_property_getaddr(obj,prop);
+ 	return true;
+}
+
+bool objprop::get(complex **p, bool nothrow)
+{
+	if ( ! object_property_is_underlying_complex() )
+	{
+		if ( ! nothrow )
+		{
+			throw_exception("objprop(<OBJECT:name='%s'>,prop=<PROPERTY:name='%s'>)::get(complex**): "
+				"property is not an underlying complex", object_name(obj), prop->name);
+		}
+		return false
+	}
+	*p = (double*)object_property_getaddr(obj,prop);
+ 	return true;
+}
+
+bool objprop::get(const char **p, bool nothrow)
+{
+	if ( ! object_property_is_underlying_string() )
+	{
+		if ( ! nothrow )
+		{
+			throw_exception("objprop(<OBJECT:name='%s'>,prop=<PROPERTY:name='%s'>)::get(const char**): "
+				"property is not an underlying string", object_name(obj), prop->name);
+		}
+		return false;
+	}
+	*p = (const char*)object_property_getaddr(obj,prop);
+ 	return true;
+}
+
+bool objprop::set(long long n, nothrow = true)
+{
+	if ( ! object_property_set_integer(obj,prop,n) )
+	{
+		if ( ! nothrow )
+		{
+			throw_exception("objprop(<OBJECT:name='%s'>,prop=<PROPERTY:name='%s'>)::set(n=%lld): "
+				"property integer set failed", object_name(obj), prop->name, n);
+		}
+		return false;
+	}
+	return true;
+}
+
+bool objprop::set(double x, UNIT *u, nothrow = true)
+{
+	if ( ! object_property_set_double(obj,prop,x) )
+	{
+		if ( ! nothrow )
+		{
+			throw_exception("objprop(<OBJECT:name='%s'>,prop=<PROPERTY:name='%s'>)::get(x=%g): "
+				"property double set failed", object_name(obj), prop->name);
+		}
+		return false;
+	}
+	return true;
+}
+
+bool objprop::set(complex &z, UNIT *u, nothrow = true)
+{
+	if ( ! object_property_set_complex(obj,prop,z) )
+	{
+		if ( ! nothrow )
+		{
+			throw_exception("objprop(<OBJECT:name='%s'>,prop=<PROPERTY:name='%s'>)::get(z=%g%+gj): "
+				"property complex set failed", object_name(obj), prop->name, z.Re(), z.Im());
+		}
+		return false;
+	}
+	return true;
+}
+
+bool objprop::set(const char *s, nothrow = true)
+{
+	if ( ! object_property_set_string(obj,prop,s) )
+	{
+		if ( ! nothrow )
+		{
+			throw_exception("objprop(<OBJECT:name='%s'>,prop=<PROPERTY:name='%s'>)::get(s='%.32s%s'): "
+				"property string set failed", object_name(obj), prop->name,s,strlen(s)>31?"...":"");
+		}
+		return false;
+	}
+	return true;
+}
+
+
 // EOF
