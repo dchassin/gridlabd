@@ -44,6 +44,7 @@ typedef struct s_globalvar
 	void (*callback)(const char *);
 	LOCKVAR lock;
 	struct s_globalvar *next;
+	char *init;
 } GLOBALVAR;
 
 /*	Typedef: EXITCODE
@@ -111,6 +112,7 @@ size_t global_getcount(void);
 void global_restore(GLOBALVAR *pos);
 void global_push(char *name, char *value);
 size_t global_saveall(FILE *fp);
+bool global_reset(GLOBALVAR *var);
 
 #ifdef __cplusplus
 }
@@ -289,6 +291,9 @@ GLOBAL char global_modelname[1024] INIT(""); /**< Name of the current model */
 
 /* Variable: global_execdir */
 GLOBAL char global_execdir[1024] INIT(""); /**< Path to folder containing installed application files */
+
+/* Variable: global_basedir */
+GLOBAL char global_basedir[1024] INIT(""); /**< Path to folder containing installed application files */
 
 /* Variable: global_strictnames */
 GLOBAL bool global_strictnames INIT(true); /**< Enforce strict global naming (prevents globals from being implicitly created by assignment) */
@@ -801,6 +806,9 @@ GLOBAL set global_glm_save_options INIT(GSO_LEGACY);	/**< GLM save options */
 /* Variable: global_filesave_options */
 GLOBAL set global_filesave_options INIT(FSO_ALL); 		/**< save options */
 
+/* Variable: global_python3 */
+GLOBAL char1024 global_python3_binary INIT("/usr/local/bin/python3"); /**< python3 executable */
+
 /* Variable: global_datadir */
 GLOBAL char1024 global_datadir INIT("");
 
@@ -892,6 +900,10 @@ public:
 	void remote_write(void *local, GLOBALVAR *var);
 	// Method: saveall
 	size_t saveall(FILE *fp);
+	// Method: saveinit
+	void saveinit(void);
+	// Method: reset
+	bool reset(GLOBALVAR *var=NULL);
 private:
 	// Method: parameter_expansion
 	bool parameter_expansion(char *buffer, size_t size, const char *spec);

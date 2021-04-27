@@ -610,6 +610,7 @@ OBJECT *object_create_single(CLASS *oclass) /**< the class of the object */
 	obj->flags = OF_NONE;
 	obj->rng_state = randwarn(NULL);
 	obj->heartbeat = 0;
+	obj->initial_values = NULL;
 	obj->events = oclass->events;
 	random_key(obj->guid,sizeof(obj->guid)/sizeof(obj->guid[0]));
 
@@ -765,12 +766,17 @@ OBJECT *object_remove_by_id(OBJECTNUM id){
 	@return \e void pointer to the data; \p NULL is not found
  **/
 void *object_get_addr(OBJECT *obj, /**< object to look in */
-					  const char *name){ /**< name of property to find */
+					  const char *name,
+					  PROPERTY **pref){ /**< name of property to find */
 	PROPERTY *prop;
 	if(obj == NULL)
 		return NULL;
 
 	prop = class_find_property(obj->oclass,name);
+	if ( pref != NULL )
+	{
+		*pref = prop;
+	}
 	
 	if(prop != NULL && prop->access != PA_PRIVATE){
 		return (void *)((char *)(obj + 1) + (int64)(prop->addr)); /* warning: cast from pointer to integer of different size */
@@ -3565,6 +3571,89 @@ PROPERTY *object_get_next_property(PROPERTY *prop, bool full)
 	else
 	{
 		return prop->next;
+	}
+}
+
+bool object_reset(OBJECT *obj)
+{
+	if ( obj == NULL )
+	{
+		for ( OBJECT *obj = first_object ; obj != NULL ; obj = obj->next )
+		{
+			if ( ! object_reset(obj) )
+				return false;
+		}
+		return true;
+	}
+	else
+	{
+		obj->clock = global_starttime;
+		obj->valid_to = TS_NEVER;
+		return obj->initial_values == NULL ? true : obj->initial_values->reset();
+	}
+}
+
+void object_set_initial_value(OBJECT *obj, const char *name, const char *value)
+{
+	obj->initial_values = new GldObjectInitialValue(obj,name,value);
+	if ( obj->initial_values == NULL )
+		throw_exception("object_set_initial_value(obj=<%s:%d>,name='%s',value='%s'): memory allocation failed", obj->oclass->name, obj->id, name, value);
+}
+void object_set_initial_double(OBJECT *obj, const char *name, double value, UNIT *unit)
+{
+	char buffer[256];
+	snprintf(buffer,sizeof(buffer)-1,"%g %s",value,unit?unit->name:"");
+	object_set_initial_value(obj,name,buffer);
+}
+void object_set_initial_complex(OBJECT *obj, const char *name, complex *value, UNIT *unit)
+{
+	char buffer[256];
+	snprintf(buffer,sizeof(buffer)-1,"%g%+g%c %s",value->Re(),value->Im(),value->Notation(),unit?unit->name:"");
+	object_set_initial_value(obj,name,buffer);
+}
+
+void object_set_initial_randomvar(OBJECT *obj, const char *name, randomvar *value, UNIT *unit)
+{
+	char buffer[1024];
+	PROPERTY *prop = object_get_property(obj,name,NULL);
+	if ( convert_from_randomvar(buffer,sizeof(buffer),(void*)value,prop) <= 0 )
+		throw_exception("object_set_initial_randomvar(obj=<%s:%d>,name='%s',...): conversion to string failed", obj->oclass->name, obj->id, name, value);
+}
+
+void object_set_initial_filter(OBJECT *obj, const char *name, TRANSFORM *value, UNIT *unit)
+{
+	char buffer[1024];
+	transform_to_string(buffer,sizeof(buffer)-1,value);
+}
+
+GldObjectInitialValue::GldObjectInitialValue(OBJECT *o, const char *n, const char *v)
+{
+	obj = o;
+	addr = object_get_addr(o,n,&prop);
+	if ( addr == NULL )
+		throw_exception("object_set_initial_value(obj=%s:%d, name='%s', value='%s'): '%s' not found", o->oclass->name, o->id, n, v, n);
+	value = strdup(v);
+	next = obj->initial_values;
+}
+
+GldObjectInitialValue::~GldObjectInitialValue(void)
+{
+	free(value);
+}
+
+bool GldObjectInitialValue::reset()
+{
+	if ( object_set_value_by_addr(obj,addr,value,prop) <= 0 )
+	{
+		return false;
+	}
+	else if ( next != NULL )
+	{
+		return next->reset();
+	}
+	else
+	{
+		return true;
 	}
 }
 

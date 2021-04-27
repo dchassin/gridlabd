@@ -183,6 +183,8 @@ GldMain::GldMain(int argc, const char *argv[])
 		return;
 	}
 #endif
+
+	get_globals()->saveinit();
 	
 	return;
 }
@@ -238,12 +240,13 @@ void GldMain::set_global_execname(const char *path)
 
 void GldMain::set_global_execdir(const char *path)
 {
-	char *pd1, *pd2;
+	char *p;
 	strcpy(global_execdir,path);
-	pd1 = strrchr(global_execdir,'/');
-	pd2 = strrchr(global_execdir,'\\');
-	if (pd1>pd2) *pd1='\0';
-	else if (pd2>pd1) *pd2='\0';
+	p = strrchr(global_execdir,'/');
+	if ( p ) *p = '\0';
+	strcpy(global_basedir,global_execdir);
+	p = strrchr(global_basedir,'/');
+	if ( p ) *p = '\0';
 	return;
 }
 
@@ -428,6 +431,39 @@ Done:
 	//      X          0          0
 	//      X          Y          Y       
 	return new_return_code;
+}
+
+bool GldMain::pause(TIMESTAMP at)
+{
+	if ( at < global_clock )
+	{
+		at = global_clock;
+	}
+	exec_mls_resume(global_clock);
+	while ( global_mainloopstate != MLS_PAUSED )
+	{
+		// TODO this is not the right way to wait
+		usleep(100000);
+	}
+	return true;
+}
+
+bool GldMain::reset(void)
+{
+	if ( pause() 
+		&& class_reset() 
+		&& object_reset() 
+		&& randomvar_reset() 
+		&& transform_reset() 
+		&& globals.reset() )
+	{
+		exec_mls_resume(global_clock);
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }
 
 #include <sys/param.h>

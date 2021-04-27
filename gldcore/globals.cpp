@@ -248,6 +248,7 @@ DEPRECATED static struct s_varmap {
 	{"kmlfile", PT_char1024, &global_kmlfile, PA_PUBLIC, "KML output file name"},
 	{"kmlhost", PT_char1024, &global_kmlhost, PA_PUBLIC, "KML server URL"},
 	{"modelname", PT_char1024, &global_modelname, PA_REFERENCE, "model name"},
+	{"basedir",PT_char1024, &global_basedir, PA_REFERENCE, "directory where the application was installed"},
 	{"execdir",PT_char1024, &global_execdir, PA_REFERENCE, "directory where executable binary was found"},
 	{"strictnames", PT_bool, &global_strictnames, PA_PUBLIC, "strict global name enable flag"},
 	{"website", PT_char1024, &global_urlbase, PA_PUBLIC, "url base string (deprecated)"}, /** @todo deprecate use of 'website' */
@@ -344,6 +345,7 @@ DEPRECATED static struct s_varmap {
 	{"glm_save_options", PT_set, &global_glm_save_options, PA_PUBLIC, "options to control GLM file save format", gso_keys},
 	{"filesave_options", PT_set, &global_filesave_options, PA_PUBLIC, "control elements saved on output", fso_keys},
 	{"ignore_errors", PT_bool, &global_ignore_errors, PA_PUBLIC, "disable exit on error behavior"},
+	{"python3_binary", PT_char1024, &global_python3_binary, PA_PUBLIC, "binary image for python3"},
 	{"keep_progress", PT_bool, &global_keep_progress, PA_PUBLIC, "keep each progress line"},
 	{"allow_variant_aggregates", PT_bool, &global_allow_variant_aggregates, PA_PUBLIC, "permits aggregates to include time-varying criteria"},
 	{"progress", PT_double, &global_progress, PA_REFERENCE, "computed progress based on clock, start, and stop times"},
@@ -418,10 +420,12 @@ STATUS GldGlobals::init(void)
 	strcat(global_datadir,"/share/gridlabd");
 	sprintf(global_version,"%d.%d.%d-%d-%s",global_version_major,global_version_minor,global_version_patch,global_version_build,global_version_branch);
 
-	for (i = 0; i < sizeof(map) / sizeof(map[0]); i++){
+	for ( i = 0 ; i < sizeof(map) / sizeof(map[0]); i++ )
+	{
 		struct s_varmap *p = &(map[i]);
 		GLOBALVAR *var = global_create(p->name, p->type, p->addr, PT_ACCESS, p->access, p->description?PT_DESCRIPTION:0, p->description, NULL);
-		if(var == NULL){
+		if ( var == NULL )
+		{
 			output_error("global_init(): global variable '%s' registration failed", p->name);
 			/* TROUBLESHOOT
 				The global variable initialization process was unable to register
@@ -429,7 +433,9 @@ STATUS GldGlobals::init(void)
 				detailed explanation of the error.  Follow the troubleshooting for
 				that message and try again.
 			*/
-		} else {
+		} 
+		else 
+		{
 			var->prop->keywords = p->keys;
 			var->callback = p->callback;
 		}
@@ -476,7 +482,13 @@ GLOBALVAR *GldGlobals::getnext(const GLOBALVAR *previous) /**< a pointer to the 
 /** Restores global varlist to a previous start position **/
 void GldGlobals::restore(GLOBALVAR *pos)
 {
-	global_varlist = pos;
+	while ( global_varlist != pos && global_varlist != NULL )
+	{
+		GLOBALVAR *next = global_varlist->next;
+		property_free(global_varlist->prop);
+		free(global_varlist);
+		global_varlist = next;
+	}
 }
 void GldGlobals::push(char *name, char *value)
 {
@@ -1636,6 +1648,32 @@ size_t GldGlobals::saveall(FILE *fp)
 	return count;
 }
 
+void GldGlobals::saveinit(void)
+{
+	for ( GLOBALVAR *var = global_varlist ; var != NULL ; var = var->next )
+	{
+		char temp[4096];
+		class_property_to_string(var->prop, (void *)var->prop->addr, temp, sizeof(temp));
+		var->init = strdup(temp);
+	}
+}
+bool GldGlobals::reset(GLOBALVAR *var)
+{
+	if ( var == NULL )
+	{
+		for ( var = global_varlist ; var != NULL ; var = var->next )
+		{
+			if ( ! global_reset(var) )
+				return false;
+		}
+	}
+	else
+	{
+		class_string_to_property(var->prop,(void*)var->prop->addr,var->init);
+	}
+	return true;
+}
+
 GldGlobals::GldGlobals(GldMain *inst) :
 	instance(*inst)
 {
@@ -1788,5 +1826,9 @@ DEPRECATED void *global_remote_read(void *local, GLOBALVAR *var)
 DEPRECATED void global_remote_write(void *local, GLOBALVAR *var)
 {
 	return my_instance->get_globals()->remote_write(local,var);
+}
+DEPRECATED bool global_reset(GLOBALVAR *var)
+{
+	return my_instance->get_globals()->reset(var);
 }
 /**@}**/

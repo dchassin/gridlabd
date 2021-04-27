@@ -4161,14 +4161,15 @@ int GldLoader::object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 			SAVETERM;
 			ACCEPT;
 		}
-		else {
+		else 
+		{
 			PROPERTY *prop = class_find_property(oclass,propname);
 			OBJECT *subobj=NULL;
 			current_object = obj; /* object context */
 			current_module = obj->oclass->module; /* module context */
 			char targetprop[1024];
 			char targetvalue[1024];
-			if ( prop!=NULL && prop->ptype == PT_object && MARKTERM(object_block(HERE,NULL,&subobj)) )
+			if ( prop != NULL && prop->ptype == PT_object && MARKTERM(object_block(HERE,NULL,&subobj)) )
 			{
 				char objname[64];
 				if (subobj->name) strcpy(objname,subobj->name); else snprintf(objname,sizeof(objname)-1,"%s:%d", subobj->oclass->name,subobj->id);
@@ -4183,7 +4184,7 @@ int GldLoader::object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 					REJECT;
 				}
 			}
-			else if ( prop == NULL && strcmp(propname,"parent")==0
+			else if ( prop == NULL && strcmp(propname,"parent") == 0
 					&& MARK
 					&& (WHITE,LITERAL("childless")) && (WHITE,LITERAL(":"))
 					&& (WHITE,TERM(name(HERE,targetprop,sizeof(targetprop))))
@@ -4246,7 +4247,7 @@ int GldLoader::object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 				}
 				else
 				{
-					SAVETERM;
+					object_set_initial_complex(obj,propname,&cval,unit);
 					ACCEPT;
 				}
 			}
@@ -4265,6 +4266,7 @@ int GldLoader::object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 				}
 				else
 				{
+					object_set_initial_double(obj,propname,dval,unit);
 					SAVETERM;
 					ACCEPT;
 				}
@@ -4284,6 +4286,7 @@ int GldLoader::object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 				}
 				else
 				{
+					object_set_initial_double(obj,propname,dval,unit);
 					SAVETERM;
 					ACCEPT;
 				}
@@ -4303,6 +4306,7 @@ int GldLoader::object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 				}
 				else
 				{
+					object_set_initial_double(obj,propname,dval,unit);
 					SAVETERM;
 					ACCEPT;
 				}
@@ -4347,6 +4351,7 @@ int GldLoader::object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 					} 
 					else 
 					{
+						object_set_initial_double(obj,propname,dval,unit);
 						SAVETERM;
 						ACCEPT;
 					}
@@ -4367,11 +4372,12 @@ int GldLoader::object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 				else if ( source!=NULL )
 				{
 					/* a transform is unresolved */
-					if (first_unresolved==source)
-
+					if ( first_unresolved == source )
+					{
 						/* source was the unresolved entry, for now it will be the transform itself */
-						first_unresolved->ref = (void*)transform_getnext(NULL);
-
+						TRANSFORM *tf = transform_getnext(NULL);
+						first_unresolved->ref = (void*)tf;
+					}
 					SAVETERM;
 					ACCEPT;
 				}
@@ -4414,11 +4420,12 @@ int GldLoader::object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 				else if ( source!=NULL )
 				{
 					/* a transform is unresolved */
-					if (first_unresolved==source)
-
+					if ( first_unresolved == source )
+					{
 						/* source was the unresolved entry, for now it will be the transform itself */
-						first_unresolved->ref = (void*)transform_getnext(NULL);
-
+						TRANSFORM *tf = transform_getnext(NULL);
+						first_unresolved->ref = (void*)tf;
+					}
 					SAVETERM;
 					ACCEPT;
 				}
@@ -4461,10 +4468,11 @@ int GldLoader::object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 				{
 					/* a transform is unresolved */
 					if (first_unresolved==source)
-
+					{
 						/* source was the unresolved entry, for now it will be the transform itself */
-						first_unresolved->ref = (void*)transform_getnext(NULL);
-
+						TRANSFORM *tf = transform_getnext(NULL);
+						first_unresolved->ref = (void*)tf;
+					}
 					SAVETERM;
 					ACCEPT;
 				}
@@ -4675,7 +4683,7 @@ int GldLoader::object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 						REJECT;
 					}
 				}
-				else if (prop->ptype==PT_object)
+				else if ( prop->ptype == PT_object )
 				{	void *addr = object_get_addr(obj,propname);
 					if (addr==NULL)
 					{
@@ -4699,6 +4707,7 @@ int GldLoader::object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 					}
 					else
 					{
+						object_set_initial_value(obj,propname,propval);
 						SAVETERM;
 						ACCEPT;
 					}

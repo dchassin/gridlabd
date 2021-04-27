@@ -1568,6 +1568,13 @@ DEPRECATED PROPERTYTYPE property_getnext_type(PROPERTYTYPE ptype);
 */
 DEPRECATED PROPERTY *property_malloc(PROPERTYTYPE, CLASS *, const char *, void *, DELEGATEDTYPE *);
 
+/*	Function: property_free
+
+	Returns: 
+	void
+ */
+void property_free(PROPERTY *prop);
+
 /* 	Function: property_size
 
 	Returns: 
@@ -1691,5 +1698,15 @@ int convert_from_string(char *buffer, int len, void *data, PROPERTY *p);
 #ifdef __cplusplus
 }
 #endif
+
+typedef struct s_eventhandlers {
+	char *init;
+	char *precommit;
+	char *presync;
+	char *sync;
+	char *postsync;
+	char *commit;
+	char *finalize;
+} EVENTHANDLERS;
 
 #endif //_PROPERTY_H

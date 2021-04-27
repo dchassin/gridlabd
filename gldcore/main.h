@@ -219,6 +219,15 @@ public:
 	// Method: global_push
 	inline void global_push(char *name, char *value) { return globals.push(name,value);};
 
+	// Method: pause
+	bool pause(TIMESTAMP at=TS_ZERO);
+
+	// Method: resume
+	inline bool resume(TIMESTAMP until=TS_NEVER) { return pause(until); };
+
+	// Method: reset
+	bool reset(void);
+
 	/* 	Method: subcommand
 		Run the subcommand in the current environment, redirecting output to stdout/stderr.
 		Returns:

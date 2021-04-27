@@ -25,12 +25,15 @@
 #include "transform.h"
 #include "enduse.h"
 
+#include <list>
+
 /* this must match property_type list in object.c */
 typedef unsigned int OBJECTRANK; /**< Object rank number */
 typedef unsigned short OBJECTSIZE; /** Object data size */
 typedef unsigned int OBJECTNUM; /** Object id number */
 typedef const char * OBJECTNAME; /** Object name */
 typedef char FULLNAME[1024]; /** Full object name (including space name) */
+typedef struct s_object_list OBJECT;
 typedef unsigned long long HASH;
 
 #define PADDR_X(X,T) ((char*)&((T)->X)-(char*)(T))
@@ -97,8 +100,20 @@ typedef enum {
 	/* add profile items here */
 	_OPI_NUMITEMS,
 } OBJECTPROFILEITEM;
-
-typedef struct s_object_list {
+class GldObjectInitialValue 
+{
+private:
+	OBJECT *obj;
+	PROPERTY *prop;
+	void *addr;
+	char *value;
+	GldObjectInitialValue *next;
+public:
+	GldObjectInitialValue(OBJECT *o, const char *n, const char *v);
+	~GldObjectInitialValue(void);
+	bool reset();
+};
+struct s_object_list {
 	OBJECTNUM id; /**< object id number; globally unique */
 	CLASS *oclass; /**< object class; determine structure of object data */
 	OBJECTNAME name;
@@ -125,9 +140,10 @@ typedef struct s_object_list {
 	TIMESTAMP heartbeat; /**< heartbeat call interval (in sim-seconds) */
 	unsigned long long guid[2]; /**< globally unique identifier */
 	EVENTHANDLERS events;
+	GldObjectInitialValue *initial_values;
 	/* IMPORTANT: flags must be last */
 	unsigned long long flags; /**< object flags */
-} OBJECT; /**< Object header structure */
+}; /**< Object header structure */
 
 /* this is the callback table for modules
  * the table is initialized in module.cpp
@@ -175,7 +191,7 @@ typedef struct s_callbacks {
 		int (*get_value_by_name)(OBJECT *, const char *, char *, int size);
 		OBJECT *(*get_reference)(OBJECT *, const char *);
 		const char *(*get_unit)(OBJECT *, const char *);
-		void *(*get_addr)(OBJECT *, const char *);
+		void *(*get_addr)(OBJECT *, const char *, PROPERTY **);
 		int (*set_value_by_type)(PROPERTYTYPE,void *data,const char *);
 		bool (*compare_basic)(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void* x, void* a, void* b, const char *part);
 		PROPERTYCOMPAREOP (*get_compare_op)(PROPERTYTYPE ptype, const char *opstr);
@@ -387,7 +403,7 @@ STATUS object_finalize(OBJECT *obj);
 int object_set_dependent(OBJECT *obj, OBJECT *dependent);
 int object_set_parent(OBJECT *obj, OBJECT *parent);
 unsigned int object_get_child_count(OBJECT *obj);
-void *object_get_addr(OBJECT *obj, const char *name);
+void *object_get_addr(OBJECT *obj, const char *name, PROPERTY **pref=NULL);
 PROPERTY *object_get_property(OBJECT *obj, PROPERTYNAME name, PROPERTYSTRUCT *part);
 PROPERTY *object_prop_in_class(OBJECT *obj, PROPERTY *prop);
 int object_set_value_by_name(OBJECT *obj, PROPERTYNAME name, const char *value);
@@ -492,6 +508,7 @@ typedef struct s_jsondata {
 	struct s_jsondata *next;
 } JSONDATA;
 bool object_set_json(OBJECT *obj, const char *propname, JSONDATA *data);
+void object_save_initial_value(OBJECT *obj, const char *name, const char *value);
 
 OBJECT *object_find_by_addr(void *addr, PROPERTY *prop=NULL);
 PROPERTY *object_get_first_property(OBJECT *obj, bool full=true);
@@ -500,6 +517,12 @@ PROPERTY *object_get_property_by_addr(OBJECT *obj, void *addr, bool full=true);
 void object_destroy(OBJECT *obj);
 void object_destroy_all(void);
 
+bool object_reset(OBJECT *obj=NULL);
+void object_set_initial_value(OBJECT *obj, const char *name, const char *value);
+void object_set_initial_double(OBJECT *obj, const char *name, double value, UNIT *unit=NULL);
+void object_set_initial_complex(OBJECT *obj, const char *name, complex *value, UNIT *unit=NULL);
+void object_set_initial_randomvar(OBJECT *obj, const char *name, randomvar *value, UNIT *unit=NULL);
+void object_set_initial_filter(OBJECT *obj, const char *name, TRANSFORM *value, UNIT *unit=NULL);
 const char *object_property_to_initial(OBJECT *obj, const char *name, char *buffer, int sz);
 
 #ifdef __cplusplus
