@@ -1,0 +1,113 @@
+#!/usr/local/bin/python3
+
+from curses import wrapper
+import curses
+
+banner = "HiPAS GridLAB-D Module Designer - Version 1.0"
+
+module_name = None
+class_name = None
+error_message = None
+
+def update_banner(screen):
+
+	screen.addstr(0,0,banner)
+
+def update_status(screen):
+	
+	global error_message
+	if error_message == None:
+		screen.addstr(curses.LINES-1,0,"Status: Ready")
+	else:
+		screen.addstr(curses.LINES-1,0,f"Status: Error ({error_message})")
+
+def open_module(screen):
+	menu(screen,"Open module",{"o": {"label":"^Open directory"}})
+	return
+
+def close_module(screen):
+	return
+
+def save(screen):
+	return
+
+def menu(screen, name, options, pad):
+	
+	update_banner(screen)
+	c = 0
+	calls = {}
+	for key,args in options.items():
+		label = args["label"]
+		calls[f"^{key}"] = args["call"]
+		screen.addstr(3,c,f"[{label}]".replace('^',''))
+		c += len(label)+3
+	update_status(screen)
+	prompt = f"{name}: "
+	screen.addstr(2,0,prompt)
+	screen.refresh()
+	key = screen.getkey()
+	screen.addstr(2,len(prompt),key)
+	screen.refresh()
+	try:
+		calls[key](screen)
+	except Exception as error:
+		error_message = str(error)
+
+def main(screen):
+	options = {
+		"o" : {"label":"^Open module","call":open_module},
+		"c" : {"label":"^Create module","call":close_module},
+		"s" : {"label":"^Save","call":save},
+		"q" : {"label":"^Quit","call":quit}
+	}
+	menu(screen,"Main menu", options,None)
+	
+# def main(screen):
+
+# 	while True:
+# 		screen.clear()
+
+# 		update_banner(screen)
+
+# 		screen.addstr(2,0,"Main Menu")
+
+# 		screen.addstr(4,2,f"Current module: {module_name}")
+# 		screen.addstr(5,2,f"Current class: {class_name}")
+
+# 		n = 7
+# 		if module_name == None:
+# 			screen.addstr(n,2,"1. Create module"); n+=1
+# 			screen.addstr(n,2,"2. Open module"); n+=1
+# 		else:
+# 			screen.addstr(n,2,"3. Create class"); n+=1
+# 			if class_name == None:
+# 				screen.addstr(n,2,"4. Open class"); n+=1
+# 			else:
+# 				screen.addstr(n,2,"5. Close class"); n+=1
+# 			screen.addstr(n,2,"6. Close module"); n+=1
+# 		screen.addstr(n,2,"9. Exit"); n+=1
+
+# 		global error_message
+# 		if error_message == None:
+# 			screen.addstr(n+3,0,f"STATUS: Ok")
+# 		else:
+# 			screen.addstr(n+3,0,f"STATUS: {error_message}")
+
+# 		screen.addstr(n+1,0,"Selection: ")
+# 		screen.refresh()
+# 		key = screen.getkey()
+
+# 		action = {
+# 			1: "create_module", 
+# 			2: "open_module",
+# 			3: "create_class",
+# 			4: "open_class",
+# 			5: "close_class",
+# 			6: "close_module",
+# 			9: "quit"}
+# 		try:
+# 			eval(action[key])
+# 		except Exception as error:
+# 			error_message = str(error)
+
+wrapper(main)
