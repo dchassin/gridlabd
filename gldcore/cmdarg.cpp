@@ -62,12 +62,11 @@ DEPRECATED STATUS load_module_list(FILE *fd,int* test_mod_num)
 }
 DEPRECATED STATUS GldCmdarg::load_module_list(FILE *fd,int* test_mod_num)
 {
-	char mod_test[1024];
-	char line[100];
-	while(fscanf(fd,"%s",line) != EOF)
+	varchar mod_test(1000);
+	varchar line(100);
+	while(fscanf(fd,"%s",line.get_string()) != EOF)
 	{
-		printf("Line: %s",line);
-		snprintf(mod_test,sizeof(mod_test)-1,"mod_test%d=%s",(*test_mod_num)++,line);
+		sprintf(mod_test,"mod_test%d=%s",(*test_mod_num)++,line.get_string());
 		if (global_setvar(mod_test)!=SUCCESS)
 		{
 			output_fatal("Unable to store module name");
@@ -122,11 +121,11 @@ void GldCmdarg::modhelp_alpha(PNTREE **ctree, CLASS *oclass)
 	}
 }
 
-DEPRECATED void set_tabs(char *tabs, int tabdepth)
+DEPRECATED void set_tabs(varchar &tabs, int tabdepth)
 {
 	my_instance->get_cmdarg()->set_tabs(tabs,tabdepth);
 }
-void GldCmdarg::set_tabs(char *tabs, int tabdepth)
+void GldCmdarg::set_tabs(varchar &tabs, int tabdepth)
 {
 	if(tabdepth > 32){
 		throw_exception("print_class_d: tabdepth > 32, which is mightily deep!");
@@ -150,17 +149,18 @@ void GldCmdarg::print_class_d(CLASS *oclass, int tabdepth)
 {
 	PROPERTY *prop;
 	FUNCTION *func;
-	char tabs[33];
+	varchar tabs;
 
 	set_tabs(tabs, tabdepth);
 
-	printf("%sclass %s {\n", tabs, oclass->name);
-	if (oclass->parent){
-		printf("%s\tparent %s;\n", tabs, oclass->parent->name);
+	printf("%sclass %s {\n", tabs.get_string(), oclass->name);
+	if (oclass->parent)
+	{
+		printf("%s\tparent %s;\n", tabs.get_string(), oclass->parent->name);
 		print_class_d(oclass->parent, tabdepth+1);
 	}
 	for (func=oclass->fmap; func!=NULL && func->oclass==oclass; func=func->next)
-		printf( "%s\tfunction %s();\n", tabs, func->name);
+		printf( "%s\tfunction %s();\n", tabs.get_string(), func->name);
 	for (prop=oclass->pmap; prop!=NULL && prop->oclass==oclass; prop=prop->next)
 	{
 		const char *propname = class_get_property_typename(prop->ptype);
@@ -170,32 +170,32 @@ void GldCmdarg::print_class_d(CLASS *oclass, int tabdepth)
 				continue;
 			if (prop->unit != NULL)
 			{
-				printf("%s\t%s %s[%s];", tabs, propname, prop->name, prop->unit->name);
+				printf("%s\t%s %s[%s];", tabs.get_string(), propname, prop->name, prop->unit->name);
 			}
 			else if (prop->ptype==PT_set || prop->ptype==PT_enumeration)
 			{
 				KEYWORD *key;
-				printf("%s\t%s {", tabs, propname);
+				printf("%s\t%s {", tabs.get_string(), propname);
 				for (key=prop->keywords; key!=NULL; key=key->next)
 					printf("%s=%" FMT_INT64 "u%s", key->name, (int64)key->value, key->next==NULL?"":", ");
 				printf("} %s;", prop->name);
 			} 
 			else 
 			{
-				printf("%s\t%s %s;", tabs, propname, prop->name);
+				printf("%s\t%s %s;", tabs.get_string(), propname, prop->name);
 			}
-			char flags[1024] = "";
+			varchar flags(1024);
 			if ( prop->flags&PF_DEPRECATED ) strcat(flags,flags[0]?",":"("),strcat(flags,"DEPRECATED");
 			if ( prop->flags&PF_REQUIRED ) strcat(flags,flags[0]?",":"("),strcat(flags,"REQUIRED");
 			if ( prop->flags&PF_OUTPUT ) strcat(flags,flags[0]?",":"("),strcat(flags,"OUTPUT");
 			if ( prop->flags&PF_DYNAMIC ) strcat(flags,flags[0]?",":"("),strcat(flags,"DYNAMIC");
 			if ( flags[0] ) strcat(flags,") ");
 			if ( flags[0] != '\0' || prop->description != NULL )
-			printf(" // %s%s",flags,prop->description?prop->description:"");
+			printf(" // %s%s",flags.get_string(),prop->description?prop->description:"");
 			printf("\n");
 		}
 	}
-	printf("%s}\n\n", tabs);
+	printf("%s}\n\n", tabs.get_string());
 }
 
 DEPRECATED void print_class(CLASS *oclass)
@@ -247,26 +247,26 @@ DEPRECATED static int help(void *main, int argc, const char *argv[]);
 
 STATUS GldCmdarg::no_cmdargs(void)
 {
-	char htmlfile[1024];
-	if ( global_autostartgui && find_file("gridlabd.htm",NULL,R_OK,htmlfile,sizeof(htmlfile)-1)!=NULL )
+	varchar htmlfile(1024);
+	if ( global_autostartgui && find_file("gridlabd.htm",NULL,R_OK,htmlfile.get_string(),htmlfile.get_size()-1)!=NULL )
 	{
-		char cmd[4096];
+		varchar cmd(4096);
 
 		/* enter server mode and wait */
 #ifdef WIN32
 		if ( htmlfile[1]!=':' )
 		{
-			snprintf(htmlfile,sizeof(htmlfile)-1,"%s\\gridlabd.htm", global_workdir);
+			snprintf(htmlfile,htmlfile.get_size()-1,"%s\\gridlabd.htm", global_workdir);
 		}
 		output_message("opening html page '%s'", htmlfile);
-		snprintf(cmd,sizeof(cmd)-1,"start %s file:///%s", global_browser, htmlfile);
+		snprintf(cmd,cmd.get_size()-1,"start %s file:///%s", global_browser, htmlfile.get_string());
 #elif defined(MACOSX)
-		snprintf(cmd,sizeof(cmd)-1,"open -a %s %s", global_browser, htmlfile);
+		snprintf(cmd,cmd.get_size()-1,"open -a %s %s", global_browser, htmlfile.get_string());
 #else
-		snprintf(cmd,sizeof(cmd)-1,"%s '%s' & ps -p $! >/dev/null", global_browser, htmlfile);
+		snprintf(cmd,cmd.get_size()-1,"%s '%s' & ps -p $! >/dev/null", global_browser, htmlfile.get_string());
 #endif
-		IN_MYCONTEXT output_verbose("Starting browser using command [%s]", cmd);
-		if (my_instance->subcommand("%s",cmd)!=0)
+		IN_MYCONTEXT output_verbose("Starting browser using command [%s]", cmd.get_string());
+		if (my_instance->subcommand("%s",cmd.get_string())!=0)
 		{
 			output_error("unable to start browser");
 			return FAILED;
@@ -602,14 +602,14 @@ int GldCmdarg::version(int argc, const char *argv[])
 	else if ( strcmp(opt,"install") == 0 )
 	{
 		// IMPORTANT: this needs to be consistent with Makefile.am, install.sh and build-aux/*.sh
-		char tmp[1024];
+		varchar tmp(1024);
 		strcpy(tmp,global_execdir);
-		char *p = strrchr(tmp,'/');
+		char *p = strrchr(tmp.get_string(),'/');
 		if ( p != NULL && strcmp(p,"/bin") == 0 )
 		{
 			*p = '\0';
 		}
-		output_message("%s", tmp);
+		output_message("%s", tmp.get_string());
 		return 0;
 	}
 	else if ( strcmp(opt,"name") == 0 )
@@ -699,7 +699,8 @@ DEPRECATED static int build_info(void *main, int argc, const char *argv[])
 			}
 		}
 	}
-	char status[]=BUILD_STATUS, *ptr=NULL, *last=NULL;
+	varchar status(BUILD_STATUS); 
+	char *ptr=NULL, *last=NULL;
 	bool old = global_suppress_repeat_messages;
 	global_suppress_repeat_messages = false;
 	switch(format)
@@ -728,7 +729,7 @@ DEPRECATED static int build_info(void *main, int argc, const char *argv[])
 				"\","
 		);
 			output_message("\t\"status\": [");
-			for ( ptr = strtok_r(status,"\n",&last) ; ptr != NULL ; ptr = strtok_r(NULL,"\n",&last) )
+			for ( ptr = strtok_r(status.get_string(),"\n",&last) ; ptr != NULL ; ptr = strtok_r(NULL,"\n",&last) )
 			{
 				if ( strcmp(ptr,"") != 0 )
 				{
@@ -951,9 +952,9 @@ int GldCmdarg::modhelp(int argc, const char *argv[])
 		CLASS *oclass = NULL;
 		argv++;
 		argc--;
-		char module_name[1024];
-		char class_name[1024];
-		if ( sscanf(argv[0],"%[^:]:%s",module_name,class_name) == 1 )
+		varchar module_name(1024);
+		varchar class_name(1024);
+		if ( sscanf(argv[0],"%1023[^:]:%1023s",module_name.get_string(),class_name.get_string()) == 1 )
 		{ 
 			// no class
 			mod = module_load(module_name,0,NULL);
@@ -965,7 +966,7 @@ int GldCmdarg::modhelp(int argc, const char *argv[])
 			oclass = class_get_class_from_classname(class_name);
 			if ( oclass == NULL ) 
 			{
-				output_fatal("Unable to find class '%s' in module '%s'", class_name, module_name);
+				output_fatal("Unable to find class '%s' in module '%s'", class_name.get_string(), module_name.get_string());
 				/*	TROUBLESHOOT
 					The <b>--modhelp</b> parameter was found on the command line, but
 					if was followed by a class specification that isn't valid.
@@ -1451,7 +1452,7 @@ int GldCmdarg::xsl(int argc, const char *argv[])
 {
 	if (argc-1>0)
 	{
-		char fname[1024];
+		varchar fname(1024);
 		int n_args = 0;
 		char *p_args[256];
 		char *buffer = strdup(argv[1]);
@@ -1464,7 +1465,7 @@ int GldCmdarg::xsl(int argc, const char *argv[])
 				p_args[n_args] = p;
 			}
 		}
-		snprintf(fname,sizeof(fname)-1,"gridlabd-%d_%d.xsl",global_version_major,global_version_minor);
+		sprintf(fname,"gridlabd-%d_%d.xsl",global_version_major,global_version_minor);
 		output_xsl(fname,n_args,(const char**)p_args);
 		free(buffer);
 		return CMDOK;
@@ -1622,15 +1623,15 @@ int GldCmdarg::info(int argc, const char *argv[])
 {
 	if ( argc>1 )
 	{
-		char cmd[4096];
+		varchar cmd(4096);
 #ifdef WIN32
-		snprintf(cmd,sizeof(cmd)-1,"start %s \"%s%s\"", global_browser, global_infourl, argv[1]);
+		sprintf(cmd,"start %s \"%s%s\"", global_browser, global_infourl, argv[1]);
 #elif defined(MACOSX)
-		snprintf(cmd,sizeof(cmd)-1,"open -a %s \"%s%s\"", global_browser, global_infourl, argv[1]);
+		sprintf(cmd,"open -a %s \"%s%s\"", global_browser, global_infourl, argv[1]);
 #else
-		snprintf(cmd,sizeof(cmd)-1,"%s \"%s%s\" & ps -p $! >/dev/null", global_browser, global_infourl, argv[1]);
+		sprintf(cmd,"%s \"%s%s\" & ps -p $! >/dev/null", global_browser, global_infourl, argv[1]);
 #endif
-		IN_MYCONTEXT output_verbose("Starting browser using command [%s]", cmd);
+		IN_MYCONTEXT output_verbose("Starting browser using command [%s]", cmd.get_string());
 		if (my_instance->subcommand(cmd)!=0)
 		{
 			output_error("unable to start browser");
@@ -1660,7 +1661,7 @@ DEPRECATED static int slave(void *main, int argc, const char *argv[])
 }
 int GldCmdarg::slave(int argc, const char *argv[])
 {
-	char host[256], port[256];
+	varchar host(256), port(256);
 
 	if ( argc < 2 )
 	{
@@ -1669,7 +1670,7 @@ int GldCmdarg::slave(int argc, const char *argv[])
 	}
 
 	IN_MYCONTEXT output_debug("slave()");
-	if(2 != sscanf(argv[1],"%255[^:]:%255s",host,port))
+	if(2 != sscanf(argv[1],"%255[^:]:%255s",host.get_string(),port.get_string()))
 	{
 		output_error("unable to parse slave parameters");
 	}
@@ -1732,7 +1733,7 @@ int GldCmdarg::example(int argc, const char *argv[])
 	MODULE *module;
 	CLASS *oclass;
 	PROPERTY *prop;
-	char modname[1024], classname[1024];
+	varchar modname(1024), classname(1024);
 	
 	if ( argc < 2 ) 
 	{
@@ -1740,7 +1741,7 @@ int GldCmdarg::example(int argc, const char *argv[])
 		return CMDERR;
 	}
 	
-	int n = sscanf(argv[1],"%1023[A-Za-z_]:%1024[A-Za-z_0-9]",modname,classname);
+	int n = sscanf(argv[1],"%1023[A-Za-z_]:%1024[A-Za-z_0-9]",modname.get_string(),classname.get_string());
 	if ( n!=2 )
 	{
 		output_error("--example: %s name is not valid",n==0?"module":"class");
@@ -1749,13 +1750,13 @@ int GldCmdarg::example(int argc, const char *argv[])
 	module = module_load(modname,0,NULL);
 	if ( module==NULL )
 	{
-		output_error("--example: module %d is not found", modname);
+		output_error("--example: module %d is not found", modname.get_string());
 		return CMDERR;
 	}
 	oclass = class_get_class_from_classname(classname);
 	if ( oclass==NULL )
 	{
-		output_error("--example: class %d is not found", classname);
+		output_error("--example: class %d is not found", classname.get_string());
 		return CMDERR;
 	}
 	output_raw("class %s {\n",oclass->name);
@@ -1766,7 +1767,7 @@ int GldCmdarg::example(int argc, const char *argv[])
 		{
 			if ( first ) output_raw("\t// required input properties\n");
 			first = false;
-			output_raw("\t%s \"%s\";\n", prop->name, prop->default_value ? prop->default_value : "");
+			output_raw("\t%s \"%s\"; // %s\n", prop->name, prop->default_value ? prop->default_value : "", prop->description?prop->description : "");
 		}
 	}
 	first = true;
@@ -1776,7 +1777,7 @@ int GldCmdarg::example(int argc, const char *argv[])
 		{
 			if ( first ) output_raw("\t// optional input properties\n");
 			first = false;
-			output_raw("\t%s \"%s\";\n", prop->name, prop->default_value ? prop->default_value : "");
+			output_raw("\t%s \"%s\"; // %s\n", prop->name, prop->default_value ? prop->default_value : "", prop->description?prop->description : "");
 		}
 	}
 	first = true;
@@ -1786,7 +1787,7 @@ int GldCmdarg::example(int argc, const char *argv[])
 		{
 			if ( first ) output_raw("\t// dynamic properties\n");
 			first = false;
-			output_raw("\t%s \"%s\";\n", prop->name, prop->default_value ? prop->default_value : "");
+			output_raw("\t%s \"%s\"; // %s\n", prop->name, prop->default_value ? prop->default_value : "", prop->description?prop->description : "");
 		}
 	}
 	first = true;
@@ -1796,7 +1797,7 @@ int GldCmdarg::example(int argc, const char *argv[])
 		{
 			if ( first ) output_raw("\t// output properties\n");
 			first = false;
-			output_raw("\t%s \"%s\";\n", prop->name, prop->default_value ? prop->default_value : "");
+			output_raw("\t%s \"%s\"; // %s\n", prop->name, prop->default_value ? prop->default_value : "", prop->description?prop->description : "");
 		}
 	}
 	first = true;
@@ -1806,7 +1807,7 @@ int GldCmdarg::example(int argc, const char *argv[])
 		{
 			if ( first ) output_raw("\t// deprecated properties\n");
 			first = false;
-			output_raw("\t%s \"%s\";\n", prop->name, prop->default_value ? prop->default_value : "");
+			output_raw("\t%s \"%s\"; // %s\n", prop->name, prop->default_value ? prop->default_value : "", prop->description?prop->description : "");
 		}
 	}
 	output_raw("}\n");
@@ -1821,11 +1822,10 @@ int GldCmdarg::mclassdef(int argc, const char *argv[])
 	MODULE *module;
 	CLASS *oclass;
 	OBJECT *obj;
-	char modname[1024], classname[1024];
+	varchar modname(1024), classname(1024);
 	int n;
-	char buffer[65536];
+	varchar buffer(65536);
 	PROPERTY *prop;
-	int count = 0;
 
 	/* generate the object */
 	if ( argc < 2 )
@@ -1833,7 +1833,7 @@ int GldCmdarg::mclassdef(int argc, const char *argv[])
 		output_error("--mclassdef requires a module:class argument");
 		return CMDERR;
 	}
-	n = sscanf(argv[1],"%1023[A-Za-z_]:%1024[A-Za-z_0-9]",modname,classname);
+	n = sscanf(argv[1],"%1023[A-Za-z_]:%1024[A-Za-z_0-9]",modname.get_string(),classname.get_string());
         if ( n!=2 )
         {
                 output_error("--mclassdef: %s name is not valid",n==0?"module":"class");
@@ -1842,19 +1842,19 @@ int GldCmdarg::mclassdef(int argc, const char *argv[])
         module = module_load(modname,0,NULL);
         if ( module==NULL )
         {
-                output_error("--mclassdef: module %d is not found", modname);
+                output_error("--mclassdef: module %d is not found", modname.get_string());
                 return CMDERR;
         }
         oclass = class_get_class_from_classname(classname);
         if ( oclass==NULL )
         {
-                output_error("--mclassdef: class %d is not found", classname);
+                output_error("--mclassdef: class %d is not found", classname.get_string());
                 return CMDERR;
         }
         obj = object_create_single(oclass);
         if ( obj==NULL )
         {
-                output_error("--mclassdef: unable to create mclassdef object from class %s", classname);
+                output_error("--mclassdef: unable to create mclassdef object from class %s", classname.get_string());
                 return CMDERR;
         }
         global_clock = time(NULL);
@@ -1862,15 +1862,15 @@ int GldCmdarg::mclassdef(int argc, const char *argv[])
         output_redirect("warning",NULL);
         if ( !object_init(obj) )
         {
-                IN_MYCONTEXT output_warning("--mclassdef: unable to initialize mclassdef object from class %s", classname);
+                IN_MYCONTEXT output_warning("--mclassdef: unable to initialize mclassdef object from class %s", classname.get_string());
         }
 	
 	/* output the classdef */
-	count = snprintf(buffer,sizeof(buffer)-1,"struct('module','%s','class','%s'", modname, classname);
+	buffer.format("struct('module','%s','class','%s'", modname.get_string(), classname.get_string());
 	for ( prop = oclass->pmap ; prop!=NULL && prop->oclass==oclass ; prop=prop->next )
 	{
-		char temp[1024];
-		const char *value = object_property_to_string(obj, prop->name, temp, 1023);
+		varchar temp(1024);
+		const char *value = object_property_to_string(obj, prop->name, temp);
 		if ( strchr(prop->name,'.')!=NULL )
 		{
 			continue; /* do not output structures */
@@ -1880,7 +1880,7 @@ int GldCmdarg::mclassdef(int argc, const char *argv[])
 			count += snprintf(buffer+count,sizeof(buffer)-1-count,",...\n\t'%s','%s'", prop->name, value);
 		}
 	}
-	count += snprintf(buffer+count,sizeof(buffer)-1-count,");\n");
+	buffer.append(");");
 	output_raw("%s",buffer);
         return CMDOK;
 }
