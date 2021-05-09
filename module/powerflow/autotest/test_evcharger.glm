@@ -1,0 +1,66 @@
+#set maximum_synctime=3600
+
+clock {
+	timezone "US/CA/Los Angeles";
+	starttime "2020-01-01 00:00:00";
+	stoptime "2021-01-01 00:00:00";
+}
+
+module powerflow;
+module tape
+{
+	csv_header_type NAME;
+}
+
+object triplex_meter
+{
+	phases AS;
+	nominal_voltage 240.0 V;
+
+	object triplex_load
+	{
+		phases AS;
+		nominal_voltage 240.0 V;
+		object evcharger
+		{
+			charger_state ON;
+			charger_mode POWER;
+			nominal_charge_power 6.7 kW;
+		};
+	};
+
+	object recorder 
+	{
+		file "triplex_meter.csv";
+		interval -1;
+		property "measured_real_energy[kWh]";
+		line_units NONE;
+	};
+}
+
+object meter
+{
+	phases ABC;
+	nominal_voltage 240.0 V;
+
+	object load
+	{
+		phases ABC;
+		nominal_voltage 240.0 V;
+		object evcharger
+		{
+			charger_state ON;
+			charger_mode CURRENT;
+			nominal_charge_current 30 A;
+		};
+	};
+
+	object recorder 
+	{
+		file "meter.csv";
+		interval -1;
+		property "measured_real_energy[kWh]";
+		line_units NONE;
+	};
+
+}

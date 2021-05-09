@@ -50,6 +50,10 @@ public:
 	inline triplex_load(CLASS *cl=oclass):triplex_node(cl){};
 	int isa(char *classname);
 
+	void add_power(const complex &S, unsigned int line=2);
+	void add_current(const complex &I, unsigned int line=2);
+	void add_impedance(const complex &Z, unsigned int line=2);
+
 	SIMULATIONMODE inter_deltaupdate_triplex_load(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 };
 

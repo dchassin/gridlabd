@@ -59,6 +59,9 @@
 #define PHASE_A		0x0001		/**< A phase connection */
 #define PHASE_B		0x0002		/**< B phase connection */
 #define PHASE_C		0x0004		/**< C phase connection */
+#define PHASE_AB    0x0003
+#define PHASE_AC    0x0005
+#define PHASE_BC    0x0006
 #define PHASE_ABC	0x0007		/**< three phases connection */
 #define PHASE_N		0x0008		/**< N phase connected */
 #define PHASE_ABCN	0x000f		/**< three phases neutral connection */

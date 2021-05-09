@@ -112,7 +112,7 @@ triplex_load::triplex_load(MODULE *mod) : triplex_node(mod)
 
 int triplex_load::isa(char *classname)
 {
-	return strcmp(classname,"triplex_load")==0 || node::isa(classname);
+	return strcmp(classname,"triplex_load")==0 || triplex_node::isa(classname);
 }
 
 int triplex_load::create(void)
@@ -865,4 +865,41 @@ EXPORT SIMULATIONMODE interupdate_triplex_load(OBJECT *obj, unsigned int64 delta
 		return status;
 	}
 }
+
+void triplex_load::add_current(const complex &I, unsigned int line)
+{
+	if ( phases&PHASE_S )
+	{
+		constant_current[line] += I;
+	}
+	else
+	{
+		error("triplex_load phase error (not split)");
+	}
+}
+
+void triplex_load::add_power(const complex &S, unsigned int line)
+{
+	if ( phases&PHASE_S )
+	{
+		constant_power[line] += S;
+	}
+	else
+	{
+		error("triplex_load phase error (not split)");
+	}
+}
+
+void triplex_load::add_impedance(const complex &Z, unsigned int line)
+{
+	if ( phases&PHASE_S )
+	{
+		constant_impedance[line] = complex(1)/(complex(1)/constant_impedance[line]+complex(1)/Z);
+	}
+	else
+	{
+		error("triplex_load phase error (not split)");
+	}
+}
+
 /**@}*/

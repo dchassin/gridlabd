@@ -3374,4 +3374,106 @@ int load::kmldata(int (*stream)(const char*,...))
 	return 0;
 }
 
+void load::add_current(const complex &I)
+{
+	const complex I3 = I / 3.0;
+	const complex I2 = I / 2.0;
+	switch ( phases&PHASE_ABC )
+	{
+	case PHASE_A:
+		constant_current[0] += I;
+		break;
+	case PHASE_B:
+		constant_current[1] += I;
+		break;
+	case PHASE_C:
+		constant_current[2] += I;
+		break;
+	case PHASE_AB:
+		constant_current[0] += I2;
+		constant_current[1] += I2;
+		break;
+	case PHASE_AC:
+		constant_current[0] += I2;
+		constant_current[2] += I2;
+		break;
+	case PHASE_BC:
+		constant_current[1] += I2;
+		constant_current[2] += I2;
+		break;
+	case PHASE_ABC:
+		constant_current[0] += I3;
+		constant_current[1] += I3;
+		constant_current[2] += I3;
+	}
+}
+
+void load::add_power(const complex &S)
+{
+	const complex S3 = S / 3.0;
+	const complex S2 = S / 2.0;
+	switch ( phases&PHASE_ABC )
+	{
+	case PHASE_A:
+		constant_power[0] += S;
+		break;
+	case PHASE_B:
+		constant_power[1] += S;
+		break;
+	case PHASE_C:
+		constant_power[2] += S;
+		break;
+	case PHASE_AB:
+		constant_power[0] += S2;
+		constant_power[1] += S2;
+		break;
+	case PHASE_AC:
+		constant_power[0] += S2;
+		constant_power[2] += S2;
+		break;
+	case PHASE_BC:
+		constant_power[1] += S2;
+		constant_power[2] += S2;
+		break;
+	case PHASE_ABC:
+		constant_power[0] += S3;
+		constant_power[1] += S3;
+		constant_power[2] += S3;
+	}
+}
+
+void load::add_impedance(const complex &Z)
+{
+	const complex Z3 = Z / 3.0;
+	const complex Z2 = Z / 2.0;
+	switch ( phases&PHASE_ABC )
+	{
+	case PHASE_A:
+		shunt[0] += Z;
+		break;
+	case PHASE_B:
+		shunt[1] += Z;
+		break;
+	case PHASE_C:
+		shunt[2] += Z;
+		break;
+	case PHASE_AB:
+		shunt[0] += Z2;
+		shunt[1] += Z2;
+		break;
+	case PHASE_AC:
+		shunt[0] += Z2;
+		shunt[2] += Z2;
+		break;
+	case PHASE_BC:
+		shunt[1] += Z2;
+		shunt[2] += Z2;
+		break;
+	case PHASE_ABC:
+		shunt[0] += Z3;
+		shunt[1] += Z3;
+		shunt[2] += Z3;
+	}
+}
+
 /**@}*/

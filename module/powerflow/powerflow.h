@@ -177,6 +177,7 @@ void schedule_deltamode_start(TIMESTAMP tstart);	/* Anticipated time for a delta
 		#include "substation.h"
 		#include "triplex_node.h"
 			#include "triplex_load.h"
+				#include "evcharger.h"
 			#include "triplex_meter.h"
 	#include "volt_var_control.h"
 #include "billdump.h"

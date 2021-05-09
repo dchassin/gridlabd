@@ -61,6 +61,10 @@ public:
 	int isa(char *classname);
 	int notify(int update_mode, PROPERTY *prop, char *value);
 	int kmldata(int (*stream)(const char*,...));
+
+	void add_power(const complex &S);
+	void add_current(const complex &I);
+	void add_impedance(const complex &Z);
 };
 
 #endif // _LOAD_H

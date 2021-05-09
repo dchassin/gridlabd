@@ -132,6 +132,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	new vfd(module);
 	new pole(module);
 	new pole_configuration(module);
+	new evcharger(module);
 
 	/* always return the first class registered */
 	return node::oclass;
