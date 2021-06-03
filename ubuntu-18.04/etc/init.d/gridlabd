@@ -1,0 +1,51 @@
+#! /bin/sh
+### BEGIN INIT INFO
+# Provides:          gridlabd
+# Default-Start:     2 3 4 5
+# Default-Stop:      1
+# Short-Description: GridLAB-D Realtime Simulation
+# Description:       The GridLAB-D realtime simulator provide an environment
+#                    in which GridLAB-D models can be started and stopped 
+#                    using the realtime hardware-in-the-loop support
+### END INIT INFO
+
+# Author: David P. Chassin (dchassin@slac.stanford.edu)
+
+NAME=gridlabd
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+DAEMON=/usr/local/bin/gridlabd-rt
+PIDFILE=/tmp/gridlabd.pid
+DESC="$(/usr/local/bin/gridlabd --version=all)"
+
+. /lib/lsb/init-functions
+
+case "$1" in
+  start)
+	log_daemon_msg "Starting $DESC" "$NAME"
+	mkdir -p `dirname "$PIDFILE"`
+	[ -f "$PIDFILE" ] || $DAEMON 
+	sleep 1
+	log_end_msg $?
+	;;
+  stop)
+	log_daemon_msg "Stopping $DESC" "$NAME"
+	kill -9 `cat $PIDFILE`
+	sleep 1
+	log_end_msg $?
+	;;
+  reload|force-reload|restart)
+	kill -9 `cat $PIDFILE`
+	sleep 1
+	[ -f "$PIDFILE" ] || $DAEMON 
+        log_end_msg $?
+        ;;
+  status)
+	[ -f "$PIDFILE" ] && echo "$NAME is running" || exit $?
+	;;
+  *)
+	echo "Usage: $SCRIPTNAME {start|stop|restart|reload|force-reload|status}" >&2
+	exit 3
+	;;
+esac
+
+exit 0
