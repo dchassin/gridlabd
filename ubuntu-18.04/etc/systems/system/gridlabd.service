@@ -1,0 +1,11 @@
+[Unit]
+Description=GridLAB-D realtime simulator
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+ExecStart=/usr/local/bin/gridlabd-rt
+
+[Install]
+WantedBy=multi-user.target
