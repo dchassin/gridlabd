@@ -179,7 +179,9 @@ function metar()
 	$GLD_BIN/python3 ${GLD_ETC}/metar2glm.py $*
 }
 
-if [ $# == 0 -o "$1" == "help" ]; then
+if [ $# == 0 ]; then
+	python3 $GLD_ETC/share/weather.py
+elif [ "$1" == "help" ]; then
 	help $2
 	exit 0
 elif [ "$(type -t $1)" = "function" ]; then
