@@ -5,7 +5,6 @@ import tkinter as tk
 from gldapp import *
 import subprocess
 import pandas as pd
-import pandastable as pt
 
 APPNAME = "Arras Weather"
 
@@ -45,14 +44,22 @@ if __name__ == "__main__":
 
     app = WeatherApp()
     app.root.minsize(820,600)
+    app.root.title(APPNAME)
+    
+    app.tools = Frame(app.root)
+    app.tools.grid(row=0,column=0,sticky=W)
 
     # weather_config = Weather("config","show").as_dict(delim='=',strip='"')
     # print(weather_config)
 
     # quit()
 
-    # weather_stations = Weather("index").as_list()
-    weather_stations = [x for x in os.listdir(os.path.join(os.environ['GLD_ETC'],"weather/US")) if x[2] == '-']
+    local = StringVar();
+    weather_stations = Weather("index",strip=True).as_list()
+    local.set(False)
+    if not weather_stations or not weather_stations[0]:
+        weather_stations = [x for x in os.listdir(os.path.join(os.environ['GLD_ETC'],"weather/US")) if x[2] == '-']
+        local.set(True)
     weather = {}
     for station in weather_stations:
         state,city = station.split("-",1)
@@ -66,28 +73,29 @@ if __name__ == "__main__":
     def change_state(value):
         state.set(value)
         city_ui['menu'].delete(0,'end')
-        for name in weather[state.get()].values():
+        for name in weather[state.get()].keys():
             city_ui['menu'].add_command(label=name,command=tk._setit(city,name))
         city.set(list(weather[state.get()])[0])
 
     city = StringVar()
     city.set(list(weather[state.get()])[0])
 
-    state_ui = OptionMenu(app.root,state,*list(weather),command=change_state)
+    state_ui = OptionMenu(app.tools,state,*list(weather),command=change_state)
     state_ui.grid(row=0,column=0,sticky=W,pady=2)
 
-    city_ui = OptionMenu(app.root,city,*list(weather[state.get()]))
+    city_ui = OptionMenu(app.tools,city,*list(weather[state.get()]))
     city_ui.grid(row=0,column=1,sticky=W,pady=2)
 
-    download_button = Button(text="Download")
+    download_button = Button(app.tools,text="Download")
     download_button.grid(row=0,column=2)
 
-    delete_button = Button(text="Delete")
+    delete_button = Button(app.tools,text="Delete")
     delete_button.grid(row=0,column=3)
 
-    local_ui = Checkbutton(app.root,text="Local only")
+    local_ui = Checkbutton(app.tools,text="Local only",variable=local)
     local_ui.grid(row=0, column=4)
     
+    Weather("get",f"{state.get()}-{city.get().replace(' ','_')}")
     station_info = {'Filepath':os.path.join(os.environ['GLD_ETC'],'weather/US',f"{state.get()}-{city.get().replace(' ','_')}.tmy3")}
     # station = weather[state.get()][city.get()]
     # Weather("get",station)
@@ -106,7 +114,8 @@ if __name__ == "__main__":
     #     ui_value.grid(row=row,column=1,sticky=W,pady=2)
     #     row += 1
 
-    app.root.title(APPNAME)
+    app.panel = Frame(app.root)
+    app.panel.grid(row=1,column=0,sticky=W)
 
     pd.options.display.max_colwidth = None
     pd.options.display.max_columns = None
@@ -132,15 +141,15 @@ if __name__ == "__main__":
     # ui_table = pt.Table(app.root,dataframe=station_data,showtoobar=True,showstatusbar=True)
     # ui.table.show()#.grid(row,1)
 
-    Label(text=station_data.index.name).grid(row=1,column=0)
+    Label(app.panel,text=station_data.index.name).grid(row=1,column=0)
     for n,data in enumerate(station_data.columns):
-        Label(text=data.split(' ')[0]).grid(row=1,column=n+1)
-        Label(text=data.split(' ')[1]).grid(row=2,column=n+1)
+        Label(app.panel,text=data.split(' ')[0]).grid(row=1,column=n+1)
+        Label(app.panel,text=data.split(' ')[1]).grid(row=2,column=n+1)
     n = 3
     for dt,data in station_data.iterrows():
-        Label(text=dt.strftime("%-d %b %H:00")).grid(row=n,column=0)
+        Label(app.panel,text=dt.strftime("%-d %b %H:00")).grid(row=n,column=0)
         for m,value in enumerate(data):
-            Label(text=str(value)).grid(row=n,column=m+1)
+            Label(app.panel,text=str(value)).grid(row=n,column=m+1)
         if n > 24:
             break
         # break

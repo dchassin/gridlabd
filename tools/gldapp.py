@@ -117,14 +117,31 @@ class GldApp:
         # File menu
         self.menu['file'] = Menu(menu)
         menu.add_cascade(menu=self.menu['file'], label='File')
-        self.menu['file'].add_command(label=f'New...',underline=0,command=self.new, accelerator="Command+N")
+        self.menu['file'].add_command(label='New',underline=0,command=self.new,accelerator="Command+N")
         self.root.bind("<Command-n>",self.new)
-        self.menu['file'].add_command(label=f'Open...',underline=0,command=self.open, accelerator="Command+O")
+        self.menu['file'].add_command(label='Open...',underline=0,command=self.open,accelerator="Command+O")
         self.root.bind("<Command-o>",self.open)
+        self.menu['file'].add_command(label='Close',underline=0,command=self.close,accelerator="Command+W")
+        self.root.bind("<Command-w>",self.close)
         
         # Edit menu
         self.menu['edit'] = Menu(menu)
         menu.add_cascade(menu=self.menu['edit'],label='Edit')
+        self.menu['edit'].add_command(label='Undo',underline=0,command=self.undo,accelerator='Command+Z')
+        self.root.bind("<Command-z>",self.undo)
+        self.menu['edit'].add_command(label='Redo',underline=0,command=self.redo,accelerator='Shift+Command+Z')
+        self.root.bind("<Command-Z>",self.redo)
+        self.menu['edit'].add_command(label='Undo',underline=0,command=self.undo,accelerator='Command+Z')
+        self.root.bind("<Command-z>",self.undo)
+        self.menu['edit'].add_separator()
+        self.menu['edit'].add_command(label='Copy',underline=0,command=self.copy,accelerator='Command+C')
+        self.root.bind("<Command-c>",self.undo)
+        self.menu['edit'].add_command(label='Cut',underline=0,command=self.cut,accelerator='Command+X')
+        self.root.bind("<Command-x>",self.cut)
+        self.menu['edit'].add_command(label='Paste',underline=0,command=self.paste,accelerator='Command+V')
+        self.root.bind("<Command-v>",self.paste)
+        self.menu['edit'].add_command(label='Paste special...',underline=0,command=self.paste_special,accelerator='Shift+Command+V')
+        self.root.bind("<Command-V>",self.paste_special)
 
         # Project menu
         self.menu['project'] = Menu(menu)
@@ -206,6 +223,27 @@ class GldApp:
         self.root.title(f"{APPNAME} - {self.name}")
         self.root.focus_force()
 
+    def close(self,*args,**kwargs):
+        showerror(title="Error",message="Not implemented")
+
+    def undo(self,*args,**kwargs):
+        showerror(title="Error",message="Not implemented")
+
+    def redo(self,*args,**kwargs):
+        showerror(title="Error",message="Not implemented")
+
+    def copy(self,*args,**kwargs):
+        showerror(title="Error",message="Not implemented")
+
+    def cut(self,*args,**kwargs):
+        showerror(title="Error",message="Not implemented")
+
+    def paste(self,*args,**kwargs):
+        showerror(title="Error",message="Not implemented")
+
+    def paste_special(self,*args,**kwargs):
+        showerror(title="Error",message="Not implemented")
+
     def run(self):
 
         self.root.mainloop()
@@ -220,7 +258,7 @@ if __name__ == "__main__":
     class TestApp(GldApp):
         config_file = "test.json"
 
-    app = GldApp()
+    app = TestApp()
     choice = StringVar()
     choice.set("Monday")
     app.place([
